@@ -1,0 +1,43 @@
+server {
+    server_name arenaspadel.club www.arenaspadel.club;
+
+    location = /favicon.ico {
+        access_log off;
+        log_not_found off;
+    }
+
+    location /static/ {
+        alias /var/www/arenapadel/app/staticfiles/;
+        expires 30d;
+        add_header Cache-Control "public, no-transform";
+    }
+
+    location /media/ {
+        alias /var/www/arenapadel/app/media/;
+    }
+
+    location / {
+        include proxy_params;
+        proxy_pass http://unix:/var/www/arenapadel/app/arenaspadel.sock;
+    }
+
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/arenaspadel.club/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/arenaspadel.club/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+}
+
+server {
+    if ($host = www.arenaspadel.club) {
+        return 301 https://$host$request_uri;
+    }
+
+    if ($host = arenaspadel.club) {
+        return 301 https://$host$request_uri;
+    }
+
+    listen 80;
+    server_name arenaspadel.club www.arenaspadel.club;
+    return 404;
+}

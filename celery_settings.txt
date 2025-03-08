@@ -1,0 +1,18 @@
+# Configuración de Celery
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # O la URL correspondiente
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'America/Caracas'  # Ajusta a tu zona horaria
+
+# Programación de tareas periódicas
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    'update-bcv-exchange-rate': {
+        'task': 'payments.tasks.update_bcv_exchange_rate',
+        'schedule': crontab(hour='*/4'),  # Cada 4 horas = 6 veces al día
+        'args': (),
+    },
+}

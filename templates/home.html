@@ -1,0 +1,112 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}ArenaPadel.club - Inicio{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Hero Section -->
+    <div class="row align-items-center py-5">
+        <div class="col-md-6">
+            <h1 class="display-4 fw-bold mb-4 text-secondary">Bienvenido a Arenas Padel Club</h1>
+            <p class="lead mb-4">Reserva tu cancha de pádel de manera fácil y rápida. Disfruta del mejor deporte con tus amigos.</p>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                <a href="{% url 'court_list' %}" class="btn btn-primary btn-lg px-4 me-md-2">Reserva tu cancha</a>
+                {% if not user.is_authenticated %}
+                    <a href="{% url 'register' %}" class="btn btn-outline-primary btn-lg px-4">Registrarse</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <img src="{% static 'img/hero-image.jpg' %}" alt="Cancha de Pádel" class="img-fluid rounded shadow">
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row py-5">
+        <div class="col-12 text-center mb-5">
+            <h2 class="fw-bold">¿Por qué elegirnos?</h2>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="fas fa-calendar-check fa-3x mb-3 text-primary"></i>
+                    <h3 class="h5 card-title">Reservas Online</h3>
+                    <p class="card-text">Reserva tu cancha en cualquier momento, desde cualquier lugar.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="fas fa-money-bill-wave fa-3x mb-3 text-primary"></i>
+                    <h3 class="h5 card-title">Pagos Flexibles</h3>
+                    <p class="card-text">Múltiples métodos de pago para tu comodidad.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center p-4">
+                <div class="card-body">
+                    <i class="fas fa-star fa-3x mb-3 text-primary"></i>
+                    <h3 class="h5 card-title">Canchas Premium</h3>
+                    <p class="card-text">Las mejores instalaciones para tu juego.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How to Reserve Section -->
+    <div class="row py-5">
+        <div class="col-12 mb-4 text-center">
+            <h2 class="fw-bold">Reservar es Fácil</h2>
+            <p class="lead">Sigue estos sencillos pasos para reservar tu cancha</p>
+        </div>
+        <div class="col-12">
+            <div class="text-white p-5 rounded" style="background: linear-gradient(135deg, #4c3f78 0%, #6a5aA8 100%);">
+                <div class="row">
+                    <div class="col-md-3 text-center mb-4 mb-md-0">
+                        <div class="bg-white rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 80px; height: 80px; color: #4c3f78; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                            <i class="fas fa-mouse-pointer fa-2x"></i>
+                        </div>
+                        <h4>Paso 1</h4>
+                        <p>Selecciona la cancha que deseas reservar</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-4 mb-md-0">
+                        <div class="bg-white rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 80px; height: 80px; color: #4c3f78; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                            <i class="fas fa-calendar-alt fa-2x"></i>
+                        </div>
+                        <h4>Paso 2</h4>
+                        <p>Elige la fecha y hora de tu preferencia</p>
+                    </div>
+                    <div class="col-md-3 text-center mb-4 mb-md-0">
+                        <div class="bg-white rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 80px; height: 80px; color: #4c3f78; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                            <i class="fas fa-credit-card fa-2x"></i>
+                        </div>
+                        <h4>Paso 3</h4>
+                        <p>Realiza el pago con tu método preferido</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="bg-white rounded-circle d-inline-flex justify-content-center align-items-center mb-3" style="width: 80px; height: 80px; color: #4c3f78; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                        <h4>Paso 4</h4>
+                        <p>¡Listo! Recibe la confirmación y disfruta</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row py-5">
+        <div class="col-12 text-center">
+            <div class="bg-primary text-white p-5 rounded">
+                <h2 class="fw-bold mb-3">¿Listo para jugar?</h2>
+                <p class="lead mb-4">Únete a nuestra comunidad y disfruta del mejor pádel.</p>
+                <a href="{% url 'court_list' %}" class="btn btn-light btn-lg">Reserva Ahora</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

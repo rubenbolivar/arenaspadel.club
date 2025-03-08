@@ -1,0 +1,105 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}ArenaPadel.club - Canchas{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="fw-bold">Nuestras Canchas</h1>
+            <p class="lead">Encuentra y reserva la cancha perfecta para tu próximo juego.</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="date" class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="date" name="date" 
+                                   value="{{ request.GET.date }}" min="{{ today|date:'Y-m-d' }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="time" class="form-label">Hora</label>
+                            <select class="form-select" id="time" name="time" required>
+                                <option value="">Selecciona una hora</option>
+                                {% for hour in available_hours %}
+                                    <option value="{{ hour }}" {% if request.GET.time == hour|stringformat:"d" %}selected{% endif %}>
+                                        {{ hour }}:00
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-search me-2"></i>Buscar Disponibilidad
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courts Grid -->
+    <div class="row">
+        {% for court in courts %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h2 class="h5 card-title mb-3">{{ court.name }}</h2>
+                    
+                    <!-- Court Info -->
+                    <div class="mb-3">
+                        <p class="mb-2">
+                            <i class="bi bi-hash me-2"></i>
+                            <strong>Número de Cancha:</strong> {{ court.number }}
+                        </p>
+                        <p class="mb-0">
+                            <i class="bi bi-clock me-2"></i>
+                            <strong>Tarifa:</strong> ${{ court.hourly_rate }}/hora
+                        </p>
+                    </div>
+                    
+                    <!-- Availability Status -->
+                    {% if request.GET.date and request.GET.time %}
+                    <div class="alert alert-success mb-3">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Disponible para la fecha y hora seleccionada
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Action Button -->
+                    <div class="d-grid">
+                        <a href="{% url 'court_detail' court.id %}{% if request.GET.date and request.GET.time %}?date={{ request.GET.date }}&time={{ request.GET.time }}{% endif %}" 
+                           class="btn btn-primary">
+                            {% if request.GET.date and request.GET.time %}
+                                <i class="bi bi-calendar-check me-2"></i>Reservar Ahora
+                            {% else %}
+                                <i class="bi bi-calendar me-2"></i>Ver Disponibilidad
+                            {% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle me-2"></i>
+                {% if request.GET.date and request.GET.time %}
+                    No hay canchas disponibles para la fecha y hora seleccionada.
+                {% else %}
+                    No hay canchas disponibles en este momento.
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

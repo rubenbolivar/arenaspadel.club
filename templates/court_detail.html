@@ -1,0 +1,273 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{{ court.name }} - ArenaPadel.club{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <!-- Court Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'court_list' %}">Canchas</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ court.name }}</li>
+                </ol>
+            </nav>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="fw-bold mb-2">{{ court.name }}</h1>
+                    <p class="lead mb-0">Cancha #{{ court.number }} - ${{ court.hourly_rate }}/hora</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Court Calendar -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Calendario de Disponibilidad</h2>
+                    
+                    <!-- Date Navigation -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered text-center">
+                            <thead>
+                                <tr>
+                                    {% for date in next_week_dates %}
+                                    <th scope="col" {% if date == selected_date %}class="table-primary"{% endif %}>
+                                        {{ date|spanish_day }}<br>
+                                        {{ date|date:"d" }} {{ date|spanish_month }}
+                                    </th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    {% for date in next_week_dates %}
+                                    <td>
+                                        <div class="btn-group-vertical w-100">
+                                            {% for hour in available_hours %}
+                                            <button type="button"
+                                                data-date="{{ date|date:'Y-m-d' }}"
+                                                data-hour="{{ hour }}"
+                                                class="btn btn-sm hour-selector {% if not availability|get_item:date|get_item:hour %}btn-outline-danger disabled{% else %}btn-outline-success{% endif %} mb-1
+                                                    {% if date == selected_date and hour|stringformat:'d' in selected_hours %}active{% endif %}">
+                                                {% if hour < 12 %}
+                                                    {{ hour }}:00 AM
+                                                {% elif hour == 12 %}
+                                                    {{ hour }}:00 PM
+                                                {% else %}
+                                                    {{ hour|add:"-12" }}:00 PM
+                                                {% endif %}
+                                            </button>
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Reservation Summary -->
+                    <div id="reservationSummary" class="alert alert-info {% if not selected_date or not selected_hours %}d-none{% endif %}">
+                        <h3 class="h5 mb-3">
+                            <i class="bi bi-info-circle me-2"></i>Resumen de Reserva
+                        </h3>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Fecha:</strong> <span id="selectedDate">{{ selected_date|date:"l d/m/Y" }}</span></p>
+                                <p class="mb-1"><strong>Horario:</strong> <span id="selectedTime">{{ selected_hours|join:", " }}:00</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Duración:</strong> <span id="duration">{{ selected_hours|length }}</span> hora(s)</p>
+                                <p class="mb-1"><strong>Total:</strong> $<span id="totalPrice">{{ court.hourly_rate|multiply:selected_hours|length|format_price }}</span></p>
+                            </div>
+                        </div>
+                        
+                        <form method="post" action="{% url 'reservation_create' court.id %}" id="reservationForm">
+                            {% csrf_token %}
+                            <input type="hidden" name="date" id="reservationDate" value="{{ selected_date|date:'Y-m-d' }}">
+                            <input type="hidden" name="hours" id="reservationHours" value="{{ selected_hours|join:',' }}">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-calendar-check me-2"></i>Confirmar Reserva
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Court Info -->
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Información de la Cancha</h2>
+                    
+                    <ul class="list-unstyled">
+                        <li class="mb-3">
+                            <i class="bi bi-hash me-2"></i>
+                            <strong>Número:</strong> {{ court.number }}
+                        </li>
+                        <li class="mb-3">
+                            <i class="bi bi-clock me-2"></i>
+                            <strong>Tarifa:</strong> ${{ court.hourly_rate }}/hora
+                        </li>
+                        <li class="mb-3">
+                            <i class="bi bi-calendar me-2"></i>
+                            <strong>Horario:</strong> 7:00 AM - 11:00 PM
+                        </li>
+                    </ul>
+                    
+                    <div class="alert alert-info">
+                        <h3 class="h5 mb-2">
+                            <i class="bi bi-info-circle me-2"></i>Política de Reservas
+                        </h3>
+                        <ul class="mb-0">
+                            <li>Las reservas se efectúan a través de nuestra página web o de manera presencial</li>
+                            <li>Puedes cancelar hasta 6 horas antes o deberás abonar el importe total</li>
+                            <li>Eres responsable del pago y consumo realizado en la cancha</li>
+                            <li>Evaluaremos las condiciones climáticas y te informaremos si no es posible jugar</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const hourlyRate = {{ court.hourly_rate }};
+    let selectedDate = null;
+    let selectedHours = [];
+    
+    // Función para formatear hora de 24h a 12h con AM/PM
+    function formatHour(hour) {
+        if (hour === 0) {
+            return "12:00 AM";
+        } else if (hour < 12) {
+            return `${hour}:00 AM`;
+        } else if (hour === 12) {
+            return "12:00 PM";
+        } else {
+            return `${hour - 12}:00 PM`;
+        }
+    }
+    
+    // Función para actualizar el resumen
+    function updateSummary() {
+        const summary = document.getElementById('reservationSummary');
+        const dateSpan = document.getElementById('selectedDate');
+        const timeSpan = document.getElementById('selectedTime');
+        const durationSpan = document.getElementById('duration');
+        const totalSpan = document.getElementById('totalPrice');
+        const dateInput = document.getElementById('reservationDate');
+        const hoursInput = document.getElementById('reservationHours');
+        
+        if (selectedHours.length > 0 && selectedDate) {
+            // Crear objeto Date con la fecha seleccionada 
+            // y formatearla correctamente en español
+            const dateParts = selectedDate.split('-');
+            const dateObj = new Date(
+                parseInt(dateParts[0]), 
+                parseInt(dateParts[1]) - 1, // JavaScript usa 0-11 para meses
+                parseInt(dateParts[2])
+            );
+            
+            const formattedDate = dateObj.toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric'
+            });
+            
+            // Ordenar las horas y crear rangos
+            const sortedHours = selectedHours.sort((a, b) => a - b);
+            const timeRanges = [];
+            let startHour = sortedHours[0];
+            let endHour = startHour;
+            
+            for (let i = 1; i < sortedHours.length; i++) {
+                if (sortedHours[i] === endHour + 1) {
+                    endHour = sortedHours[i];
+                } else {
+                    timeRanges.push(`${formatHour(startHour)} - ${formatHour(endHour + 1)}`);
+                    startHour = sortedHours[i];
+                    endHour = startHour;
+                }
+            }
+            timeRanges.push(`${formatHour(startHour)} - ${formatHour(endHour + 1)}`);
+            
+            dateSpan.textContent = formattedDate;
+            timeSpan.textContent = timeRanges.join(', ');
+            durationSpan.textContent = selectedHours.length;
+            
+            // Formatear el precio con coma como separador decimal
+            const totalPrice = (hourlyRate * selectedHours.length).toFixed(2).replace('.', ',');
+            totalSpan.textContent = totalPrice;
+            
+            dateInput.value = selectedDate;
+            hoursInput.value = selectedHours.join(',');
+            
+            summary.classList.remove('d-none');
+            
+            // Añadir log para depuración
+            console.log('Fecha seleccionada:', selectedDate);
+            console.log('Horas seleccionadas:', selectedHours);
+            console.log('Fecha formateada:', formattedDate);
+        } else {
+            summary.classList.add('d-none');
+        }
+    }
+    
+    // Event listeners para los botones de hora
+    document.querySelectorAll('.hour-selector').forEach(button => {
+        button.addEventListener('click', function() {
+            const date = this.dataset.date;
+            const hour = parseInt(this.dataset.hour);
+            
+            if (this.classList.contains('disabled')) return;
+            
+            if (!selectedDate || date !== selectedDate) {
+                // Si es una nueva fecha, limpiar selección anterior
+                console.log('Cambiando de fecha:', selectedDate, 'a', date);
+                selectedDate = date;
+                selectedHours = [];
+                document.querySelectorAll('.hour-selector.active').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+            }
+            
+            if (this.classList.contains('active')) {
+                // Desactivar hora si ya está seleccionada
+                this.classList.remove('active');
+                selectedHours = selectedHours.filter(h => h !== hour);
+            } else {
+                // Activar hora
+                this.classList.add('active');
+                selectedHours.push(hour);
+            }
+            
+            updateSummary();
+        });
+    });
+    
+    // Inicializar con valores preseleccionados
+    if ('{{ selected_date|date:"Y-m-d" }}') {
+        selectedDate = '{{ selected_date|date:"Y-m-d" }}';
+        selectedHours = [{% for hour in selected_hours %}{{ hour }}{% if not forloop.last %},{% endif %}{% endfor %}];
+    }
+    
+    // Actualizar resumen inicial
+    updateSummary();
+});
+</script>
+{% endblock %}

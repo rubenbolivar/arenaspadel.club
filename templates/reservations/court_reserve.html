@@ -1,0 +1,92 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Reservar Cancha - ArenaPadel.club{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card reservation-card animate-slide-in">
+                <div class="card-header bg-primary text-white py-3">
+                    <h1 class="h4 mb-0">Reservar {{ court.name }}</h1>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Date and Time Selection -->
+                        <div class="mb-4">
+                            <h2 class="h5 mb-3">Fecha y Hora</h2>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="date" class="form-label">Fecha</label>
+                                    <input type="date" class="form-control" id="date" name="date" 
+                                           min="{{ min_date|date:'Y-m-d' }}" 
+                                           max="{{ max_date|date:'Y-m-d' }}" 
+                                           required>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="time" class="form-label">Hora</label>
+                                    <select class="form-select" id="time" name="time" required>
+                                        <option value="">Selecciona una hora</option>
+                                        {% for hour in "6789101112131415161718192021"|make_list %}
+                                            <option value="{{ hour }}:00">{{ hour }}:00</option>
+                                            <option value="{{ hour }}:30">{{ hour }}:30</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="duration" class="form-label">Duración</label>
+                                    <select class="form-select" id="duration" name="duration" required>
+                                        <option value="1">1 hora</option>
+                                        <option value="1.5">1 hora y media</option>
+                                        <option value="2">2 horas</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Precio por hora</label>
+                                    <div class="form-control-plaintext">
+                                        ${{ court.hourly_rate }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check me-2"></i>Continuar
+                            </button>
+                            <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-lg ms-2">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        
+        // Validate form before submit
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,8 @@
+¡Reserva Confirmada! :)
+
+Cancha: {{ court_name }}
+Fecha: {{ date }}
+Hora: {{ time }}
+Precio: ${{ price }}
+
+Gracias por reservar con ArenaPadel! :)

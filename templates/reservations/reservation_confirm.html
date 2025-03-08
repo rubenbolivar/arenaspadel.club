@@ -1,0 +1,208 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Confirmar Reserva - ArenaPadel.club{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card reservation-card animate-slide-in">
+                <div class="card-header bg-primary text-white py-3">
+                    <h1 class="h4 mb-0">Confirmar Reserva</h1>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Reservation Details -->
+                    <div class="mb-4">
+                        <h2 class="h5 mb-3">Detalles de la Reserva</h2>
+                        <div class="list-group">
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-volleyball-ball me-2"></i>Cancha</span>
+                                <span class="fw-bold text-primary">{{ reservation.court.name }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="far fa-calendar me-2"></i>Fecha</span>
+                                <span class="fw-bold">{{ reservation.start_time|date:"d/m/Y" }}</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="far fa-clock me-2"></i>Hora</span>
+                                <span class="fw-bold">
+                                    {{ reservation.start_time|time:"H:i" }} - {{ reservation.end_time|time:"H:i" }}
+                                </span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-hourglass-half me-2"></i>Duración</span>
+                                <span class="fw-bold">{{ duration }} hora(s)</span>
+                            </div>
+                            
+                            {% if reservation.rentals.all %}
+                            <div class="list-group-item">
+                                <div class="fw-bold mb-2"><i class="fas fa-volleyball-ball me-2"></i>Implementos Alquilados</div>
+                                <ul class="list-unstyled ps-3">
+                                {% for rental in reservation.rentals.all %}
+                                    <li class="d-flex justify-content-between align-items-center mb-1">
+                                        <span>{{ rental.item.name }} x{{ rental.quantity }}</span>
+                                        <span class="text-secondary">${{ rental.unit_price|floatformat:2 }} x {{ rental.quantity }} = ${{ rental.quantity|multiply:rental.unit_price|floatformat:2 }}</span>
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="fas fa-tag me-2"></i>Total</span>
+                                <span class="fw-bold h4 mb-0 text-primary">${{ total }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Methods -->
+                    <div class="mb-4">
+                        <h2 class="h5 mb-3">Método de Pago</h2>
+                        <form id="payment-form" method="post" action="{% url 'payment_create' reservation.id %}" class="needs-validation" novalidate enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" id="id_payment_method" name="payment_method" value="">
+
+                            <div class="row g-3">
+                                <!-- Pago Móvil -->
+                                <div class="col-md-4">
+                                    <div class="card payment-method h-100" data-method="PAGO_MOVIL">
+                                        <div class="card-body text-center py-4">
+                                            <i class="fas fa-mobile-alt fa-2x mb-3 text-primary"></i>
+                                            <h3 class="h6 mb-0">Pago Móvil</h3>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Zelle -->
+                                <div class="col-md-4">
+                                    <div class="card payment-method h-100" data-method="ZELLE">
+                                        <div class="card-body text-center py-4">
+                                            <i class="fas fa-university fa-2x mb-3 text-primary"></i>
+                                            <h3 class="h6 mb-0">Zelle</h3>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Cash -->
+                                <div class="col-md-4">
+                                    <div class="card payment-method h-100" data-method="CASH">
+                                        <div class="card-body text-center py-4">
+                                            <i class="fas fa-money-bill fa-2x mb-3 text-primary"></i>
+                                            <h3 class="h6 mb-0">Efectivo</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Payment Instructions -->
+                            <div id="payment-instructions" class="mt-4" style="display: none;">
+                                <!-- Pago Móvil Instructions -->
+                                <div id="PAGO_MOVIL-instructions" class="payment-specific-instructions" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <h4 class="h6">Instrucciones para Pago Móvil</h4>
+                                        <p class="mb-2">Por favor realiza el pago a:</p>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Banco:</strong> Banesco</li>
+                                            <li><strong>Teléfono:</strong> 0414-1234567</li>
+                                            <li><strong>CI:</strong> V-12345678</li>
+                                            <li><strong>Monto:</strong> ${{ total }}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Zelle Instructions -->
+                                <div id="ZELLE-instructions" class="payment-specific-instructions" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <h4 class="h6">Instrucciones para Zelle</h4>
+                                        <p class="mb-2">Por favor realiza el pago a:</p>
+                                        <ul class="list-unstyled">
+                                            <li><strong>Email:</strong> payment@arenaspadel.club</li>
+                                            <li><strong>Nombre:</strong> Arenas Padel Club</li>
+                                            <li><strong>Monto:</strong> ${{ total }}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Cash Instructions -->
+                                <div id="CASH-instructions" class="payment-specific-instructions" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <p class="mb-0">El pago en efectivo se realiza directamente en nuestras instalaciones.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Proof of Payment Upload -->
+                                <div id="proof-upload-section" class="mt-3" style="display: none;">
+                                    <div class="mb-3">
+                                        <label for="proof_image" class="form-label">Comprobante de Pago</label>
+                                        <input type="file" class="form-control" id="proof_image" name="proof_image" accept="image/*">
+                                        <div class="form-text">Por favor sube una captura de pantalla del pago realizado</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 text-center">
+                                <button type="submit" class="btn btn-primary btn-lg px-5" disabled>
+                                    Confirmar Pago
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentMethods = document.querySelectorAll('.payment-method');
+    const paymentMethodInput = document.getElementById('id_payment_method');
+    const submitButton = document.querySelector('button[type="submit"]');
+    const paymentInstructions = document.getElementById('payment-instructions');
+    const proofUploadSection = document.getElementById('proof-upload-section');
+    const proofImageInput = document.getElementById('proof_image');
+
+    paymentMethods.forEach(method => {
+        method.addEventListener('click', function() {
+            // Remove active class from all methods
+            paymentMethods.forEach(m => m.classList.remove('border-primary'));
+            
+            // Add active class to selected method
+            this.classList.add('border-primary');
+            
+            // Get selected payment method
+            const selectedMethod = this.dataset.method;
+            paymentMethodInput.value = selectedMethod;
+            
+            // Show/hide payment instructions
+            paymentInstructions.style.display = 'block';
+            document.querySelectorAll('.payment-specific-instructions').forEach(inst => {
+                inst.style.display = 'none';
+            });
+            document.getElementById(`${selectedMethod}-instructions`).style.display = 'block';
+            
+            // Show/hide proof upload section based on payment method
+            if (selectedMethod === 'PAGO_MOVIL' || selectedMethod === 'ZELLE') {
+                proofUploadSection.style.display = 'block';
+                proofImageInput.required = true;
+                submitButton.disabled = !proofImageInput.files.length;
+            } else {
+                proofUploadSection.style.display = 'none';
+                proofImageInput.required = false;
+                submitButton.disabled = false;
+            }
+        });
+    });
+
+    // Enable/disable submit button based on proof upload for relevant payment methods
+    proofImageInput.addEventListener('change', function() {
+        if (paymentMethodInput.value === 'PAGO_MOVIL' || paymentMethodInput.value === 'ZELLE') {
+            submitButton.disabled = !this.files.length;
+        }
+    });
+});
+</script>
+{% endblock %}

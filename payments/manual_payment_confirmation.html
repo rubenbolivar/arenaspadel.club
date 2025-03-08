@@ -1,0 +1,96 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">Confirmar Pago</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Resumen de la reserva -->
+                    <div class="alert alert-info mb-4">
+                        <h5>Resumen de la Reserva</h5>
+                        <p class="mb-1"><strong>Cancha:</strong> {{ reservation.court.name }}</p>
+                        <p class="mb-1"><strong>Fecha:</strong> {{ reservation.start_time|date:"d/m/Y" }}</p>
+                        <p class="mb-1"><strong>Hora:</strong> {{ reservation.start_time|date:"H:i" }} - {{ reservation.end_time|date:"H:i" }}</p>
+                        <p class="mb-0"><strong>Total a pagar:</strong> ${{ reservation.total_price }}</p>
+                    </div>
+
+                    <!-- Instrucciones de pago -->
+                    <div class="payment-instructions mb-4">
+                        <h5>Instrucciones de Pago</h5>
+                        {% if payment_method == 'ZELLE' %}
+                            <p>Por favor, realiza tu pago a través de Zelle usando la siguiente información:</p>
+                            <ul class="list-unstyled">
+                                <li><strong>Email:</strong> {{ zelle_email }}</li>
+                                <li><strong>Nombre:</strong> ArenaPadel Club</li>
+                            </ul>
+                        {% elif payment_method == 'PAGO_MOVIL' %}
+                            <p>Por favor, realiza tu pago a través de Pago Móvil usando la siguiente información:</p>
+                            
+                            <div class="text-center mb-3">
+                                <img src="{% static 'img/banesco-logo.png' %}" alt="Banesco" class="img-fluid" style="max-height: 80px;">
+                            </div>
+                            
+                            <ul class="list-unstyled">
+                                <li><strong>Banco:</strong> {{ pago_movil_bank }}</li>
+                                <li><strong>Teléfono:</strong> {{ pago_movil_phone }}</li>
+                                <li><strong>CI:</strong> {{ pago_movil_id }}</li>
+                            </ul>
+                        {% else %}
+                            <p>Por favor, realiza tu pago mediante transferencia bancaria usando la siguiente información:</p>
+                            <ul class="list-unstyled">
+                                <li><strong>Banco:</strong> Banco Nacional de Crédito</li>
+                                <li><strong>Cuenta:</strong> 0191-0000-00-0000000000</li>
+                                <li><strong>Titular:</strong> ArenaPadel Club</li>
+                                <li><strong>RIF:</strong> J-00000000-0</li>
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <!-- Formulario de confirmación -->
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="payment_method" value="{{ payment_method }}">
+                        
+                        <div class="mb-3">
+                            <label for="proof_image" class="form-label">Comprobante de Pago</label>
+                            <input type="file" class="form-control" id="proof_image" name="proof_image" required accept="image/*,.pdf">
+                            <div class="form-text">Sube una captura de pantalla o foto del comprobante de pago</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="reference" class="form-label">Número de Referencia</label>
+                            <input type="text" class="form-control" id="reference" name="reference" required>
+                            <div class="form-text">Ingresa el número de referencia o confirmación de tu pago</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>Confirmar Pago
+                            </button>
+                            <a href="{% url 'payments:payment_select' reservation.id %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Volver a Métodos de Pago
+                            </a>
+                        </div>
+                    </form>
+                    
+                    <!-- Separador -->
+                    <hr class="my-4">
+                    
+                    <!-- Opción para notificar por WhatsApp directamente -->
+                    <div class="text-center">
+                        <p class="mb-3">¿Ya realizaste el pago? Notifica por WhatsApp para agilizar la confirmación:</p>
+                        <a href="{% url 'payments:notify_payment_whatsapp' reservation.id %}?method={{ payment_method }}" class="btn btn-success btn-lg">
+                            <i class="bi bi-whatsapp me-2"></i>Notificar pago por WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

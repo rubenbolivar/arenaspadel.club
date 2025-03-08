@@ -1,0 +1,10 @@
+# Ignorar todas las plantillas de Django
+**/*.html
+
+# Ignorar carpeta de plantillas específicamente
+templates/**/*
+
+# Otros archivos que podrían causar problemas
+staticfiles/**/*
+media/**/*
+*.py

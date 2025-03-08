@@ -1,0 +1,182 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Registro - ArenaPadel.club{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <img src="{% static 'img/logo.png' %}" alt="ArenaPadel.club" height="60" class="mb-3">
+                        <h1 class="h3">Crear Cuenta</h1>
+                        <p class="text-muted">Únete a nuestra comunidad de pádel</p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="row g-3">
+                            <!-- Personal Information -->
+                            <div class="col-md-6">
+                                <label for="id_first_name" class="form-label">Nombre</label>
+                                <input type="text" class="form-control" id="id_first_name" name="first_name" 
+                                       value="{{ form.first_name.value|default:'' }}" required>
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.first_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_last_name" class="form-label">Apellido</label>
+                                <input type="text" class="form-control" id="id_last_name" name="last_name" 
+                                       value="{{ form.last_name.value|default:'' }}" required>
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.last_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Contact Information -->
+                            <div class="col-md-6">
+                                <label for="id_email" class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="id_email" name="email" 
+                                       value="{{ form.email.value|default:'' }}" required>
+                                {% if form.email.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.email.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_whatsapp" class="form-label">WhatsApp</label>
+                                <input type="tel" class="form-control" id="id_whatsapp" name="whatsapp" 
+                                       value="{{ form.whatsapp.value|default:'' }}" required>
+                                {% if form.whatsapp.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.whatsapp.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Document Information -->
+                            <div class="col-md-6">
+                                <label for="id_document_type" class="form-label">Tipo de Documento</label>
+                                <select class="form-select" id="id_document_type" name="document_type">
+                                    <option value="CI" {% if form.document_type.value == 'CI' %}selected{% endif %}>Cédula</option>
+                                    <option value="PASS" {% if form.document_type.value == 'PASS' %}selected{% endif %}>Pasaporte</option>
+                                </select>
+                                {% if form.document_type.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.document_type.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_document_id" class="form-label">Número de Documento</label>
+                                <input type="text" class="form-control" id="id_document_id" name="document_id" 
+                                       value="{{ form.document_id.value|default:'' }}" required>
+                                {% if form.document_id.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.document_id.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Account Information -->
+                            <div class="col-md-12">
+                                <label for="id_username" class="form-label">Nombre de Usuario</label>
+                                <input type="text" class="form-control" id="id_username" name="username" 
+                                       value="{{ form.username.value|default:'' }}" required>
+                                {% if form.username.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.username.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_password1" class="form-label">Contraseña</label>
+                                <input type="password" class="form-control" id="id_password1" name="password1" required>
+                                {% if form.password1.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.password1.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="id_password2" class="form-label">Confirmar Contraseña</label>
+                                <input type="password" class="form-control" id="id_password2" name="password2" required>
+                                {% if form.password2.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.password2.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Terms and Conditions -->
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="id_terms" name="terms" required>
+                                    <label class="form-check-label" for="id_terms">
+                                        Acepto los <a href="{% url 'terms' %}" target="_blank">términos y condiciones</a>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-user-plus me-2"></i>Crear Cuenta
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="text-center">
+                        <p class="mb-0">¿Ya tienes una cuenta?</p>
+                        <a href="{% url 'login' %}" class="btn btn-outline-primary mt-2">
+                            <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

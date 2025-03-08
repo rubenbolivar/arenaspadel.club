@@ -1,0 +1,196 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% load reservation_tags %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">Confirmar Pago</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Resumen de la reserva -->
+                    <div class="alert alert-info mb-4">
+                        <h5>Resumen de la Reserva</h5>
+                        <p class="mb-1"><strong>Cancha:</strong> {{ reservation.court.name }}</p>
+                        <p class="mb-1"><strong>Fecha:</strong> {{ reservation.start_time|date:"d/m/Y" }}</p>
+                        <p class="mb-1"><strong>Hora:</strong> {{ reservation.start_time|date:"H:i" }} - {{ reservation.end_time|date:"H:i" }}</p>
+                        <p class="mb-0"><strong>Total a pagar:</strong> ${{ reservation.total_price|format_price }}</p>
+                    </div>
+
+                    <!-- Instrucciones de pago -->
+                    <div class="payment-instructions mb-4">
+                        <h5>Instrucciones de Pago</h5>
+                        {% if payment_method == 'ZELLE' %}
+                            <p>Por favor, realiza tu pago a través de Zelle usando la siguiente información:</p>
+                            <ul class="list-unstyled">
+                                <li><strong>Email:</strong> {{ zelle_email }}</li>
+                                <li><strong>Nombre:</strong> ArenaPadel Club</li>
+                            </ul>
+                        {% elif payment_method == 'PAGO_MOVIL' %}
+                            <p>Por favor, realiza tu pago a través de Pago Móvil usando la siguiente información:</p>
+                            
+                            <div class="text-center mb-3">
+                                <img src="{% static 'img/banesco-logo.png' %}" alt="Banesco" class="img-fluid" style="max-height: 80px;">
+                            </div>
+                            
+                            <!-- Nuevo bloque con el cálculo en Bolívares usando la tasa oficial del BCV -->
+                            <div class="alert alert-primary mb-3 p-3">
+                                <h5 class="alert-heading"><i class="bi bi-calculator me-2"></i>Monto a Pagar</h5>
+                                <hr>
+                                {% get_bcv_rate as bcv_rate %}
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <p class="mb-0"><strong>USD:</strong></p>
+                                    </div>
+                                    <div>
+                                        <p class="mb-0"><strong>${{ reservation.total_price|format_price }}</strong></p>
+                                    </div>
+                                </div>
+                                
+                                {% if bcv_rate %}
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <p class="mb-0"><strong>Tasa BCV:</strong></p>
+                                        </div>
+                                        <div>
+                                            <p class="mb-0">Bs. {{ bcv_rate|format_price }}</p>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <p class="mb-1"><strong>Monto en Bs.:</strong></p>
+                                        </div>
+                                        <div>
+                                            <p class="mb-1 h5 text-success">Bs. {{ reservation.total_price|to_bolivares|format_price }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {% get_bcv_last_update as last_update %}
+                                    {% if last_update %}
+                                        <p class="mb-0 text-muted small mt-2 text-center">
+                                            <i class="bi bi-clock me-1"></i>Tasa actualizada: {{ last_update|date:"d/m/Y H:i" }}
+                                        </p>
+                                    {% endif %}
+                                {% else %}
+                                    <hr>
+                                    <div class="text-center py-2">
+                                        <p class="mb-0 text-danger">
+                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                            No se pudo obtener la tasa actual del BCV.
+                                        </p>
+                                        <p class="mb-0 small">
+                                            Por favor, consulta la tasa oficial en 
+                                            <a href="http://www.bcv.org.ve/" target="_blank" class="alert-link">www.bcv.org.ve</a>
+                                        </p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="alert alert-light border mb-3">
+                                <h6 class="mb-2"><i class="bi bi-bank me-2"></i>Datos para Pago Móvil:</h6>
+                                <ul class="list-unstyled mb-0">
+                                    <li><strong>Banco:</strong> {{ pago_movil_bank }}</li>
+                                    <li><strong>Teléfono:</strong> 0424-9743328</li>
+                                    <li><strong>RIF:</strong> J-505097962</li>
+                                </ul>
+                            </div>
+                        {% elif payment_method == 'CASH' %}
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong>Importante:</strong> Has seleccionado pago en efectivo.
+                            </div>
+                            <p>Para confirmar tu reserva, debes seguir estas instrucciones:</p>
+                            <ol>
+                                <li>Presenta esta confirmación de reserva al personal en la entrada.</li>
+                                <li><strong>Debes llegar al menos 30 minutos antes</strong> de tu hora reservada para realizar el pago.</li>
+                                <li>El personal confirmará tu pago y activará tu reserva.</li>
+                                <li>Si no llegas con suficiente antelación, la reserva podría ser cancelada.</li>
+                            </ol>
+                            <p class="text-center mt-3">
+                                <i class="bi bi-clock fs-4 text-warning"></i> <strong>Tu reserva estará pendiente hasta que realices el pago en efectivo.</strong>
+                            </p>
+                        {% else %}
+                            <p>Por favor, realiza tu pago mediante transferencia bancaria usando la siguiente información:</p>
+                            <ul class="list-unstyled">
+                                <li><strong>Banco:</strong> Banco Nacional de Crédito</li>
+                                <li><strong>Cuenta:</strong> 0191-0000-00-0000000000</li>
+                                <li><strong>Titular:</strong> ArenaPadel Club</li>
+                                <li><strong>RIF:</strong> J-00000000-0</li>
+                            </ul>
+                        {% endif %}
+                    </div>
+
+                    <!-- Formulario de confirmación -->
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="payment_method" value="{{ payment_method }}">
+                        
+                        {% if payment_method != 'CASH' %}
+                        <div class="mb-3">
+                            <label for="proof_image" class="form-label">Comprobante de Pago</label>
+                            
+                            <!-- Selector de archivos personalizado en español -->
+                            <div class="custom-file-container">
+                                <input type="file" class="form-control d-none" id="proof_image" name="proof_image" required accept="image/*,.pdf">
+                                <div class="input-group">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('proof_image').click()">Seleccionar Archivo</button>
+                                    <span class="form-control" id="file-name-display">Ningún archivo seleccionado</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-text">Sube una captura de pantalla o foto del comprobante de pago</div>
+                            
+                            <script>
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    const fileInput = document.getElementById('proof_image');
+                                    const fileNameDisplay = document.getElementById('file-name-display');
+                                    
+                                    fileInput.addEventListener('change', function() {
+                                        if (this.files && this.files.length > 0) {
+                                            fileNameDisplay.textContent = this.files[0].name;
+                                        } else {
+                                            fileNameDisplay.textContent = 'Ningún archivo seleccionado';
+                                        }
+                                    });
+                                });
+                            </script>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="reference" class="form-label">Número de Referencia</label>
+                            <input type="text" class="form-control" id="reference" name="reference" required>
+                            <div class="form-text">Ingresa el número de referencia o confirmación de tu pago</div>
+                        </div>
+                        {% else %}
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Notas adicionales (opcional)</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                            <div class="form-text">Cualquier información adicional que quieras proporcionar</div>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                {% if payment_method == 'CASH' %}
+                                <i class="bi bi-check-circle me-2"></i>Confirmar Reserva con Pago en Efectivo
+                                {% else %}
+                                <i class="bi bi-check-circle me-2"></i>Confirmar Pago
+                                {% endif %}
+                            </button>
+                            <a href="{% url 'payments:payment_select' reservation.id %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Volver a Métodos de Pago
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Registrar Pago</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Detalles de la Reserva</h5>
+            <p><strong>Cancha:</strong> {{ reservation.court.name }}</p>
+            <p><strong>Fecha:</strong> {{ reservation.date }}</p>
+            <p><strong>Hora:</strong> {{ reservation.time }}</p>
+            <p><strong>Monto:</strong> $15.00</p>
+        </div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <div class="mb-4">
+            <label for="payment_method" class="form-label">Método de Pago</label>
+            <select class="form-select" id="payment_method" name="payment_method" required>
+                <option value="">Seleccione un método de pago</option>
+                {% for method_id, method_name in payment_methods %}
+                {% if method_id != 'STRIPE' and method_id != 'PAYPAL' %}
+                <option value="{{ method_id }}">{{ method_name }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">
+                Por favor seleccione un método de pago.
+            </div>
+        </div>
+
+        <div id="proof_upload" class="mb-4" style="display: none;">
+            <label for="proof_image" class="form-label">Comprobante de Pago</label>
+            <input type="file" class="form-control" id="proof_image" name="proof_image" accept="image/*">
+            <div class="invalid-feedback">
+                Por favor suba un comprobante de pago.
+            </div>
+            <small class="form-text text-muted">
+                Suba una captura de pantalla o foto del comprobante de pago.
+            </small>
+        </div>
+
+        <div id="cash_instructions" class="alert alert-info mb-4" style="display: none;">
+            <h5>Instrucciones para Pago en Efectivo:</h5>
+            <p>1. Su reserva quedará pendiente hasta que realice el pago.</p>
+            <p>2. Debe presentarse 30 minutos antes de su hora reservada.</p>
+            <p>3. El pago debe realizarse en efectivo exacto.</p>
+            <p>4. La reserva se cancelará si no se presenta a tiempo.</p>
+        </div>
+
+        <div id="pago_movil_instructions" class="alert alert-info mb-4" style="display: none;">
+            <h5>Instrucciones para Pago Móvil:</h5>
+            <p><strong>Banco:</strong> Banesco</p>
+            <p><strong>Teléfono:</strong> 0414-1234567</p>
+            <p><strong>CI:</strong> V-12345678</p>
+            <p>Una vez realizado el pago, suba la captura de pantalla del comprobante.</p>
+        </div>
+
+        <div id="zelle_instructions" class="alert alert-info mb-4" style="display: none;">
+            <h5>Instrucciones para Zelle:</h5>
+            <p><strong>Email:</strong> pagos@arenaspadel.club</p>
+            <p><strong>Nombre:</strong> Arenas Padel Club</p>
+            <p>Una vez realizado el pago, suba la captura de pantalla del comprobante.</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Registrar Pago</button>
+        <a href="{% url 'reservation_detail' reservation.id %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentMethodSelect = document.getElementById('payment_method');
+    const proofUpload = document.getElementById('proof_upload');
+    const cashInstructions = document.getElementById('cash_instructions');
+    const pagoMovilInstructions = document.getElementById('pago_movil_instructions');
+    const zelleInstructions = document.getElementById('zelle_instructions');
+    
+    paymentMethodSelect.addEventListener('change', function() {
+        // Ocultar todas las instrucciones
+        cashInstructions.style.display = 'none';
+        pagoMovilInstructions.style.display = 'none';
+        zelleInstructions.style.display = 'none';
+        proofUpload.style.display = 'none';
+        
+        // Mostrar las instrucciones correspondientes
+        switch(this.value) {
+            case 'CASH':
+                cashInstructions.style.display = 'block';
+                break;
+            case 'PAGO_MOVIL':
+                pagoMovilInstructions.style.display = 'block';
+                proofUpload.style.display = 'block';
+                break;
+            case 'ZELLE':
+                zelleInstructions.style.display = 'block';
+                proofUpload.style.display = 'block';
+                break;
+        }
+    });
+});
+</script>
+{% endblock %}

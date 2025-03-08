@@ -1,0 +1,149 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="h4 mb-0">Selecciona tu método de pago</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Resumen de la reserva -->
+                    <div class="alert alert-info">
+                        <h5>Resumen de la Reserva</h5>
+                        <p class="mb-1"><strong>Cancha:</strong> {{ reservation.court.name }}</p>
+                        <p class="mb-1"><strong>Fecha:</strong> {{ reservation.start_time|date:"d/m/Y" }}</p>
+                        <p class="mb-1"><strong>Hora:</strong> {{ reservation.start_time|date:"H:i" }} - {{ reservation.end_time|date:"H:i" }}</p>
+                        
+                        {% if reservation.rentals.exists %}
+                        <div class="mt-2 mb-2">
+                            <strong>Implementos alquilados:</strong>
+                            <ul class="mb-1">
+                            {% for rental in reservation.rentals.all %}
+                                <li>{{ rental.item.name }} x{{ rental.quantity }}: ${{ rental.total_price|format_price }}</li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        <p class="mb-0"><strong>Total a pagar:</strong> ${{ reservation.total_price|format_price }}</p>
+                    </div>
+
+                    <div class="row g-4">
+                        <!-- Stripe Payment - Temporalmente no disponible -->
+                        <div class="col-md-6">
+                            <div class="card h-100 border-secondary opacity-75">
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">Pago con Tarjeta</h5>
+                                    <p class="card-text">Paga de forma segura con tu tarjeta de crédito o débito</p>
+                                    <div class="alert alert-warning">
+                                        <small><i class="bi bi-info-circle me-1"></i> Próximamente disponible</small>
+                                    </div>
+                                    <button id="stripe-button" class="btn btn-outline-secondary" disabled>
+                                        <i class="bi bi-credit-card me-2"></i>Pagar con Tarjeta
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Manual Payment Methods -->
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title text-center mb-4">Otros Métodos de Pago</h5>
+                                    
+                                    <div class="list-group">
+                                        <!-- Zelle - Temporalmente no disponible -->
+                                        <div class="list-group-item list-group-item-action disabled text-muted">
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1">Zelle</h6>
+                                                    <small class="text-danger"><i class="bi bi-exclamation-circle"></i> No disponible por ahora</small>
+                                                </div>
+                                                <small>{{ zelle_email }}</small>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Pago Móvil - DESTACADO -->
+                                        <a href="{% url 'payments:payment_confirm' reservation.id %}?method=pago_movil"
+                                           class="list-group-item list-group-item-action active bg-success border-success">
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <div>
+                                                    <h5 class="mb-1"><i class="bi bi-phone me-2"></i>Pago Móvil</h5>
+                                                    <small class="text-white">Método recomendado</small>
+                                                </div>
+                                                <span class="badge bg-light text-success">{{ pago_movil_bank }} - {{ pago_movil_phone }}</span>
+                                            </div>
+                                        </a>
+                                        
+                                        <!-- Pago en Efectivo -->
+                                        <a href="{% url 'payments:payment_confirm' reservation.id %}?method=cash"
+                                           class="list-group-item list-group-item-action">
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1"><i class="bi bi-cash-coin me-2"></i>Pago en Efectivo</h6>
+                                                    <small class="text-warning"><i class="bi bi-exclamation-triangle"></i> Debes presentarte 30 minutos antes</small>
+                                                </div>
+                                                <span class="badge bg-secondary">En local</span>
+                                            </div>
+                                        </a>
+                                        
+                                        <!-- Bank Transfer - Oculto -->
+                                        {% comment %}
+                                        <a href="{% url 'payments:payment_confirm' reservation.id %}?method=bank_transfer"
+                                           class="list-group-item list-group-item-action">
+                                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                                <h6 class="mb-1">Transferencia Bancaria</h6>
+                                                <small>Ver detalles</small>
+                                            </div>
+                                        </a>
+                                        {% endcomment %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripe = Stripe('{{ stripe_public_key }}');
+    const stripeButton = document.getElementById('stripe-button');
+
+    stripeButton.addEventListener('click', async () => {
+        stripeButton.disabled = true;
+        try {
+            const response = await fetch("{% url 'payments:payment_create' reservation.id %}");
+            const session = await response.json();
+            
+            if (session.error) {
+                alert(session.error);
+                return;
+            }
+            
+            const result = await stripe.redirectToCheckout({
+                sessionId: session.sessionId
+            });
+            
+            if (result.error) {
+                alert(result.error.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Hubo un error al procesar tu pago. Por favor, intenta nuevamente.');
+        } finally {
+            stripeButton.disabled = false;
+        }
+    });
+</script>
+{% endblock %}

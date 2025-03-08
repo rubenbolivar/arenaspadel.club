@@ -1,0 +1,364 @@
+{% extends 'base/base.html' %}
+{% load reservation_tags %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="list-group">
+                <a href="#personal-info" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                    <i class="bi bi-person-fill me-2"></i>Información Personal
+                </a>
+                <a href="#reservations" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="bi bi-calendar-check me-2"></i>Mis Reservas
+                </a>
+                <a href="#payments" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="bi bi-credit-card me-2"></i>Pagos
+                </a>
+                <a href="#preferences" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                    <i class="bi bi-gear-fill me-2"></i>Preferencias
+                </a>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="col-md-9">
+            <div class="tab-content">
+                <!-- Personal Information -->
+                <div class="tab-pane fade show active" id="personal-info">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="h4 mb-4">Información Personal</h2>
+                            <form method="post" action="{% url 'users:profile_edit' %}">
+                                {% csrf_token %}
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="id_first_name" class="form-label">Nombre</label>
+                                        <input type="text" class="form-control" id="id_first_name" name="first_name" 
+                                               value="{{ user.first_name }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="id_last_name" class="form-label">Apellido</label>
+                                        <input type="text" class="form-control" id="id_last_name" name="last_name" 
+                                               value="{{ user.last_name }}" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="id_email" class="form-label">Correo Electrónico</label>
+                                        <input type="email" class="form-control" id="id_email" name="email" 
+                                               value="{{ user.email }}" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-save me-2"></i>Guardar Cambios
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reservations -->
+                <div class="tab-pane fade" id="reservations">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="h4 mb-4">Mis Reservas</h2>
+                            {% if reservations %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Cancha</th>
+                                                <th>Fecha</th>
+                                                <th>Horario</th>
+                                                <th>Estado</th>
+                                                <th>Total</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for reservation in reservations %}
+                                            <tr>
+                                                <td>{{ reservation.court.name }}</td>
+                                                <td>{{ reservation.start_time|date:"d/m/Y" }}</td>
+                                                <td>
+                                                    {{ reservation.start_time|time:"H:i" }} - {{ reservation.end_time|time:"H:i" }}
+                                                    <small class="text-muted d-block">
+                                                        {% with hours=reservation.end_time|timeuntil:reservation.start_time|slice:":2"|add:"0" %}
+                                                        {{ hours }} hora{{ hours|pluralize }}
+                                                        {% endwith %}
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    {% if reservation.status == 'pending_payment' %}
+                                                        <span class="badge bg-warning">Pendiente de Pago</span>
+                                                    {% elif reservation.status == 'confirmed' %}
+                                                        <span class="badge bg-success">Confirmada</span>
+                                                    {% elif reservation.status == 'cancelled' %}
+                                                        <span class="badge bg-danger">Cancelada</span>
+                                                    {% elif reservation.status == 'completed' %}
+                                                        <span class="badge bg-secondary">Completada</span>
+                                                    {% endif %}
+                                                    
+                                                    {% if reservation.rentals.exists %}
+                                                        <button class="badge bg-info ms-1 border-0" style="cursor: pointer;" 
+                                                              onclick="showRentalDetails('{{ reservation.id }}')">
+                                                            <i class="bi bi-bag-fill"></i> Alquileres
+                                                        </button>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    ${{ reservation.total_price|format_price }}
+                                                    <small class="text-muted d-block">
+                                                        (${{ reservation.court.hourly_rate|format_price }}/hora)
+                                                    </small>
+                                                </td>
+                                                <td>
+                                                    <!-- DEBUG: Today: {{ today }} | Reservation date: {{ reservation.start_time.date }} -->
+                                                {% if reservation.status == 'confirmed' %}
+                                                    <form method="post" action="{% url 'reservation_cancel' reservation.id %}" 
+                                                          class="d-inline" onsubmit="return confirm('¿Estás seguro de cancelar esta reserva? Recuerda que debes hacerlo con al menos 6 horas de antelación o deberás abonar el importe total.')">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            <i class="bi bi-x-circle me-1"></i>Cancelar
+                                                        </button>
+                                                    </form>
+                                                    {% endif %}
+                                                    
+                                                    {% if reservation.status == 'confirmed' %}
+                                                    <a href="{% url 'payments:whatsapp_notification' reservation_id=reservation.id %}" 
+                                                       class="btn btn-sm btn-success mt-1">
+                                                        <i class="bi bi-whatsapp me-1"></i>Notificar
+                                                    </a>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No tienes reservas activas.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments -->
+                <div class="tab-pane fade" id="payments">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="h4 mb-4">Historial de Pagos</h2>
+                            {% if payments %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Fecha</th>
+                                                <th>Reserva</th>
+                                                <th>Método</th>
+                                                <th>Monto</th>
+                                                <th>Estado</th>
+                                                <th>Comprobante</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for payment in payments %}
+                                            <tr>
+                                                <td>{{ payment.created_at|date:"d/m/Y H:i" }}</td>
+                                                <td>{{ payment.reservation.court.name }} - {{ payment.reservation.start_time|date:"d/m/Y H:i" }}</td>
+                                                <td>{{ payment.get_payment_method_display }}</td>
+                                                <td>${{ payment.amount }}</td>
+                                                <td>
+                                                    {% if payment.status == 'PENDING' %}
+                                                        <span class="badge bg-warning">Pendiente</span>
+                                                    {% elif payment.status == 'REVIEWING' %}
+                                                        <span class="badge bg-info">En Revisión</span>
+                                                    {% elif payment.status == 'APPROVED' %}
+                                                        <span class="badge bg-success">Aprobado</span>
+                                                    {% elif payment.status == 'REJECTED' %}
+                                                        <span class="badge bg-danger">Rechazado</span>
+                                                    {% elif payment.status == 'CANCELLED' %}
+                                                        <span class="badge bg-secondary">Cancelado</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if payment.proof_image %}
+                                                        <a href="{{ payment.proof_image.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                            <i class="bi bi-eye me-1"></i>Ver
+                                                        </a>
+                                                    {% else %}
+                                                        -
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No hay pagos registrados.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preferences -->
+                <div class="tab-pane fade" id="preferences">
+                    <div class="card">
+                        <div class="card-body">
+                            <h2 class="h4 mb-4">Preferencias</h2>
+                            <!-- Aquí irán las preferencias del usuario -->
+                            <p class="text-muted">No hay preferencias configuradas.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Contenedor para los modales -->
+    <div id="modalContainer"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Función para mostrar los detalles de alquiler
+    function showRentalDetails(reservationId) {
+        // Datos para cada reserva
+        const rentalData = {
+            {% for reservation in reservations %}
+                {% if reservation.rentals.exists %}
+                    '{{ reservation.id }}': {
+                        title: 'Artículos Alquilados - Reserva {{ reservation.id }}',
+                        rentals: [
+                            {% for rental in reservation.rentals.all %}
+                                {
+                                    item: '{{ rental.item.name }}',
+                                    quantity: {{ rental.quantity }},
+                                    unitPrice: {{ rental.unit_price }},
+                                    total: {{ rental.total_price }},
+                                    image: '{% if rental.item.image %}{{ rental.item.image.url }}{% else %}{% endif %}'
+                                }{% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        ],
+                        subtotal: {{ reservation.total_rental_price }}
+                    }{% if not forloop.last %},{% endif %}
+                {% endif %}
+            {% endfor %}
+        };
+        
+        // Obtener datos de la reserva seleccionada
+        const data = rentalData[reservationId];
+        if (!data) return;
+        
+        // Crear tabla de productos
+        let tableRows = '';
+        data.rentals.forEach(rental => {
+            const imgHtml = rental.image ? `<img src="${rental.image}" alt="${rental.item}" style="height: 40px; width: auto; margin-right: 10px;">` : '';
+            tableRows += `
+                <tr>
+                    <td>${imgHtml}${rental.item}</td>
+                    <td>${rental.quantity}</td>
+                    <td>$${rental.unitPrice.toFixed(2)}</td>
+                    <td>$${rental.total.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+        
+        // Construir el HTML del modal
+        const modalHtml = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">${data.title}</h5>
+                        <button type="button" class="btn-close" onclick="closeModal()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Artículo</th>
+                                        <th>Cantidad</th>
+                                        <th>Precio Unitario</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableRows}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <th colspan="3" class="text-end">Subtotal Alquileres:</th>
+                                        <th>$${data.subtotal.toFixed(2)}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Crear y mostrar el modal
+        const modalContainer = document.getElementById('modalContainer');
+        modalContainer.innerHTML = `<div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" id="rentalModal">${modalHtml}</div>`;
+        
+        // Bloquear el scroll del body
+        document.body.style.overflow = 'hidden';
+        
+        // Añadir evento para cerrar con ESC
+        document.addEventListener('keydown', handleEscapeKey);
+    }
+    
+    // Función para cerrar el modal
+    function closeModal() {
+        const modalContainer = document.getElementById('modalContainer');
+        modalContainer.innerHTML = '';
+        
+        // Restaurar el scroll
+        document.body.style.overflow = '';
+        
+        // Eliminar el evento de ESC
+        document.removeEventListener('keydown', handleEscapeKey);
+    }
+    
+    // Función para manejar la tecla ESC
+    function handleEscapeKey(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    }
+    
+    // Cerrar modal al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        const modalContainer = document.getElementById('modalContainer');
+        const modal = document.getElementById('rentalModal');
+        
+        if (modal && e.target === modal) {
+            closeModal();
+        }
+    });
+    
+    // Activar la pestaña correspondiente según el hash de la URL
+    document.addEventListener('DOMContentLoaded', function() {
+        // Obtener el hash de la URL
+        const hash = window.location.hash;
+        if (hash) {
+            // Encontrar el enlace que corresponde a este hash
+            const tabLink = document.querySelector(`a[href="${hash}"]`);
+            if (tabLink) {
+                // Activar la pestaña manualmente
+                const tabTrigger = new bootstrap.Tab(tabLink);
+                tabTrigger.show();
+            }
+        }
+    });
+</script>
+{% endblock %}

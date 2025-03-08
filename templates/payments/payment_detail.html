@@ -1,0 +1,75 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Detalles del Pago</h2>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Estado del Pago</h5>
+            <div class="mb-3">
+                {% if payment.status == 'PENDING' %}
+                    <span class="badge bg-warning text-dark">Pendiente</span>
+                {% elif payment.status == 'REVIEWING' %}
+                    <span class="badge bg-info">En Revisión</span>
+                {% elif payment.status == 'APPROVED' %}
+                    <span class="badge bg-success">Aprobado</span>
+                {% elif payment.status == 'REJECTED' %}
+                    <span class="badge bg-danger">Rechazado</span>
+                {% elif payment.status == 'CANCELLED' %}
+                    <span class="badge bg-secondary">Cancelado</span>
+                {% endif %}
+            </div>
+            
+            <p><strong>Método de Pago:</strong> {{ payment.get_payment_method_display }}</p>
+            <p><strong>Monto:</strong> ${{ payment.amount }}</p>
+            <p><strong>Fecha de Registro:</strong> {{ payment.created_at|date:"d/m/Y H:i" }}</p>
+            
+            {% if payment.validated_by %}
+            <p><strong>Validado por:</strong> {{ payment.validated_by.get_full_name }}</p>
+            <p><strong>Fecha de Validación:</strong> {{ payment.validated_at|date:"d/m/Y H:i" }}</p>
+            {% endif %}
+            
+            {% if payment.notes %}
+            <p><strong>Notas:</strong> {{ payment.notes }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Detalles de la Reserva</h5>
+            <p><strong>Cancha:</strong> {{ payment.reservation.court.name }}</p>
+            <p><strong>Fecha:</strong> {{ payment.reservation.date }}</p>
+            <p><strong>Hora:</strong> {{ payment.reservation.time }}</p>
+        </div>
+    </div>
+
+    {% if payment.proof_image %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Comprobante de Pago</h5>
+            <img src="{{ payment.proof_image.url }}" alt="Comprobante de pago" class="img-fluid">
+        </div>
+    </div>
+    {% endif %}
+
+    {% if payment.status == 'PENDING' or payment.status == 'REVIEWING' %}
+    <div class="alert alert-info">
+        {% if payment.payment_method == 'CASH' %}
+        <h5>Instrucciones:</h5>
+        <p>1. Preséntese 30 minutos antes de su hora reservada.</p>
+        <p>2. Realice el pago en efectivo exacto.</p>
+        <p>3. La reserva se cancelará si no se presenta a tiempo.</p>
+        {% else %}
+        <h5>Su pago está siendo procesado</h5>
+        <p>Un administrador revisará su comprobante y validará el pago.</p>
+        <p>Recibirá una notificación cuando el pago sea aprobado.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <a href="{% url 'reservation_detail' payment.reservation.id %}" class="btn btn-primary">Volver a la Reserva</a>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h2 class="h4 mb-0">Notificar Pago por WhatsApp</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Resumen de la reserva -->
+                    <div class="alert alert-info mb-4">
+                        <h5>Resumen de la Reserva</h5>
+                        <p class="mb-1"><strong>Cancha:</strong> {{ reservation.court.name }}</p>
+                        <p class="mb-1"><strong>Fecha:</strong> {{ reservation.start_time|date:"d/m/Y" }}</p>
+                        <p class="mb-1"><strong>Hora:</strong> {{ reservation.start_time|date:"H:i" }} - {{ reservation.end_time|date:"H:i" }}</p>
+                        
+                        {% if reservation.rentals.all %}
+                        <div class="mt-2 mb-2">
+                            <strong>Implementos Alquilados:</strong>
+                            <ul class="list-unstyled ps-3 mb-0">
+                            {% for rental in reservation.rentals.all %}
+                                <li>{{ rental.item.name }} x{{ rental.quantity }} (${{ rental.unit_price|floatformat:2 }} c/u)</li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        <p class="mb-0"><strong>Total a pagar:</strong> ${{ reservation.total_price|format_price }}</p>
+                    </div>
+
+                    <!-- Formulario de mensaje a enviar -->
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Mensaje para enviar</label>
+                            <textarea class="form-control" id="message" name="message" rows="10" required>{{ default_message }}</textarea>
+                            <div class="form-text">Puedes personalizar este mensaje antes de enviarlo</div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="bi bi-whatsapp me-2"></i>Abrir WhatsApp
+                            </button>
+                            <a href="{% url 'payments:payment_confirm' reservation.id %}?method={{ payment_method }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>Volver
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

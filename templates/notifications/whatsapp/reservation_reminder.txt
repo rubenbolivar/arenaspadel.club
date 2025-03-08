@@ -1,0 +1,6 @@
+¡Tu reserva es en 1 hora! :)
+
+Cancha: {{ court_name }}
+Hora: {{ time }}
+
+¡Te esperamos! :)
